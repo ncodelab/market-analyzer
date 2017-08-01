@@ -67,7 +67,7 @@ def get_topics(m_start, i_start, d_start):
             instrument_select(i_start)
             market = market_name()
             m_code = m_info[m]
-            log.info('Total instruments: %s for %s, index: %s' % (total_instruments - i_start, market, m))
+            log.info('Total instruments: %s for %s, market index: %s' % (total_instruments - i_start, market, m))
 
             for i in range(i_start, total_instruments):
                 i_code = info[i]
