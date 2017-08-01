@@ -64,7 +64,7 @@ def get_topics(m_start, i_start, d_start):
             market_select(m)
             info = instruments_info()
             total_instruments = len(info)
-            instrument_select(0)
+            instrument_select(i_start)
             market = market_name()
             m_code = m_info[m]
             log.info('Total instruments: %s for %s, index: %s' % (total_instruments - i_start, market, m))
@@ -93,7 +93,9 @@ def get_topics(m_start, i_start, d_start):
 
                     if fails >= __MAX_DATA_FAILS:
                         break
+
                 d_start = date.today()
+
             i_start = 0
 
         input('Press Enter to close...\n')
