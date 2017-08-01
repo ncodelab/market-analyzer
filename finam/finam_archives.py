@@ -34,7 +34,7 @@ __DOWNLOAD_LINK = 'http://export.finam.ru/%s_%s_%s.csv?' \
                   '&dtf=1&tmf=1&MSOR=1&mstime=on&mstimever=1&sep=1&sep2=1&datf=6&at=1'
 __MAX_TRY_FAILS = 10
 __MAX_DATA_FAILS = 60
-__NUM_DAYS = 20 * 365
+__NUM_DAYS = 30 * 365
 
 __TIMEOUT = 3
 
