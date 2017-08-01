@@ -1,9 +1,13 @@
+#!/usr/bin/env python
+
+import getopt
 import logging
 import os
 from datetime import date, timedelta
 from logging.config import fileConfig
 from urllib import request
 
+import sys
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
@@ -43,7 +47,7 @@ log = logging.getLogger()
 driver = None
 
 
-def get_topics():
+def get_topics(m_start, i_start):
     global driver
     log.debug('Start Selenium')
     driver = webdriver.Chrome()
@@ -53,25 +57,23 @@ def get_topics():
         log.debug('Looking for markets and instruments')
         m_info = market_info()
         total_markets = len(m_info)
-        log.debug('Total markets: ' + str(total_markets))
-        for m in range(total_markets):
+        log.info('Total markets: ' + str(total_markets - m_start))
+        for m in range(m_start, total_markets):
             market_select(m)
             info = instruments_info()
             total_instruments = len(info)
             instrument_select(0)
             market = market_name()
             m_code = m_info[m]
-            log.debug('Total instruments: ' + str(total_instruments) + ' for ' + market)
-            folder = 'data/%s' % market
-            if not os.path.exists(folder):
-                os.makedirs(folder)
+            log.info('Total instruments: %s for %s, index: %s' % (total_instruments - i_start, market, m))
 
-            for i in range(total_instruments):
+            for i in range(i_start, total_instruments):
+                i_start = 0
                 i_code = info[i]
                 instrument_select(i)
                 instrument = instrument_name()
                 ticker = instrument_ticker()
-                log.debug('Market %s -> instrument %s: %s by %s' % (market, instrument, ticker, i_code))
+                log.info('Market %s -> instrument %s: %s by %s, index: %s' % (market, instrument, ticker, i_code, i))
                 fails = 0
                 today = date.today()
                 for day in (today - timedelta(days=d) for d in range(0, __NUM_DAYS)):
@@ -80,7 +82,10 @@ def get_topics():
                     if is_valid_data(data):
                         fails = 0
                         day_formatted = day.strftime('%Y-%m-%d')
-                        log.debug('Saving data for %s' % day_formatted)
+                        log.info('Saving data for %s' % day_formatted)
+                        folder = 'data/%s/%s' % (market, instrument)
+                        if not os.path.exists(folder):
+                            os.makedirs(folder)
                         filename = '%s/%s-%s.csv' % (folder, instrument, day_formatted)
                         with open(filename, 'w') as f:
                             f.write(data)
@@ -175,4 +180,28 @@ def is_valid_data(data):
 
 
 if __name__ == '__main__':
-    get_topics()
+    argv = sys.argv[1:]
+    market_from = 0
+    instr_from = 0
+    usage = 'test.py -m <market_from> -i <instr_from>'
+    try:
+        opts, args = getopt.getopt(argv,"hm:i:",["market=","instr="])
+    except getopt.GetoptError:
+        print(usage)
+        sys.exit(2)
+    try:
+        for opt, arg in opts:
+            if opt == '-h':
+                print(usage)
+                sys.exit()
+            elif opt in ("-m", "--market"):
+                market_from = int(arg)
+            elif opt in ("-i", "--instr"):
+                instr_from = int(arg)
+    except ValueError as e:
+        print(e)
+        print(usage)
+        sys.exit(1)
+    log.debug('Load markets from index: %d' % market_from)
+    log.debug('Load instruments from index: %d' % instr_from)
+    get_topics(market_from, instr_from)
