@@ -3,12 +3,12 @@
 import getopt
 import logging
 import os
+import sys
 import time
 from datetime import date, timedelta, datetime
 from logging.config import fileConfig
 from urllib import request
 
-import sys
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
@@ -102,14 +102,21 @@ def get_topics(m_start, i_start, d_start):
         driver.close()
 
 
-def load_url(url, tries_left = __MAX_TRY_FAILS):
+def load_url(url, tries_left=__MAX_TRY_FAILS):
+    data = ''
+    success = False
     try:
         response = request.urlopen(url)
-        return response.read().decode('utf-8')
-    except ConnectionRefusedError:
+        data = response.read().decode('utf-8')
+        success = True
+    except (TimeoutError, ConnectionRefusedError):
+        pass
+    if success:
+        return data
+    else:
         if tries_left > 0:
-            time.sleep(1)
-            load_url(url, --tries_left)
+            time.sleep(3)
+            return load_url(url, --tries_left)
         else:
             log.error('Can\'t load url: %s' % url)
             return ''
@@ -190,7 +197,7 @@ def market_select(index):
 
 def is_valid_data(data):
     i = data.find('\n')
-    return i > 0 and data[i+1:].find('\n') > 0
+    return i > 0 and data[i + 1:].find('\n') > 0
 
 
 if __name__ == '__main__':
@@ -200,7 +207,7 @@ if __name__ == '__main__':
     date_from = date.today()
     usage = 'test.py -m <market_from> -i <instr_from> -d <from_date, YYYY-mm-dd>'
     try:
-        opts, args = getopt.getopt(argv,"hm:i:d:",["market=","instr=","from-date"])
+        opts, args = getopt.getopt(argv, 'hm:i:d:', ['market=', 'instr=', 'from-date'])
     except getopt.GetoptError:
         print(usage)
         sys.exit(2)
@@ -209,11 +216,11 @@ if __name__ == '__main__':
             if opt == '-h':
                 print(usage)
                 sys.exit()
-            elif opt in ("-m", "--market"):
+            elif opt in ('-m', '--market'):
                 market_from = int(arg)
-            elif opt in ("-i", "--instr"):
+            elif opt in ('-i', '--instr'):
                 instr_from = int(arg)
-            elif opt in ("-d", "--from-date"):
+            elif opt in ('-d', '--from-date'):
                 date_from = datetime.strptime(arg, '%Y-%m-%d').date()
     except ValueError as e:
         print(e)
