@@ -26,3 +26,13 @@ coverage.xml
 
 # Jupyter Notebook
 .ipynb_checkpoints
+
+### Selenium
+chromedriver*
+geckodriver*
+
+### Mac OS
+.DS_Store
+
+### Loaded data
+data/
