@@ -3,7 +3,8 @@
 import getopt
 import logging
 import os
-from datetime import date, timedelta
+import time
+from datetime import date, timedelta, datetime
 from logging.config import fileConfig
 from urllib import request
 
@@ -31,7 +32,8 @@ __DOWNLOAD_LINK = 'http://export.finam.ru/%s_%s_%s.csv?' \
                   '&dt=%s&mt=%s&yt=%s&to=%s' \
                   '&p=1&f=%s_%s_%s&e=.csv&cn=%s' \
                   '&dtf=1&tmf=1&MSOR=1&mstime=on&mstimever=1&sep=1&sep2=1&datf=6&at=1'
-__MAX_SEQ_FAILS = 60
+__MAX_TRY_FAILS = 10
+__MAX_DATA_FAILS = 60
 __NUM_DAYS = 20 * 365
 
 __TIMEOUT = 3
@@ -47,7 +49,7 @@ log = logging.getLogger()
 driver = None
 
 
-def get_topics(m_start, i_start):
+def get_topics(m_start, i_start, d_start):
     global driver
     log.debug('Start Selenium')
     driver = webdriver.Chrome()
@@ -68,17 +70,14 @@ def get_topics(m_start, i_start):
             log.info('Total instruments: %s for %s, index: %s' % (total_instruments - i_start, market, m))
 
             for i in range(i_start, total_instruments):
-                i_start = 0
                 i_code = info[i]
                 instrument_select(i)
                 instrument = instrument_name()
                 ticker = instrument_ticker()
                 log.info('Market %s -> instrument %s: %s by %s, index: %s' % (market, instrument, ticker, i_code, i))
                 fails = 0
-                today = date.today()
-                for day in (today - timedelta(days=d) for d in range(0, __NUM_DAYS)):
-                    response = request.urlopen(instrument_link(m_code, (ticker, i_code), day, day))
-                    data = response.read().decode('utf-8')
+                for day in (d_start - timedelta(days=d) for d in range(0, __NUM_DAYS)):
+                    data = load_url(instrument_link(m_code, (ticker, i_code), day, day))
                     if is_valid_data(data):
                         fails = 0
                         day_formatted = day.strftime('%Y-%m-%d')
@@ -92,13 +91,28 @@ def get_topics(m_start, i_start):
                     else:
                         fails += 1
 
-                    if fails >= __MAX_SEQ_FAILS:
+                    if fails >= __MAX_DATA_FAILS:
                         break
+                d_start = date.today()
+            i_start = 0
 
         input('Press Enter to close...\n')
     finally:
         log.debug('Close Selenium')
         driver.close()
+
+
+def load_url(url, tries_left = __MAX_TRY_FAILS):
+    try:
+        response = request.urlopen(url)
+        return response.read().decode('utf-8')
+    except ConnectionRefusedError:
+        if tries_left > 0:
+            time.sleep(1)
+            load_url(url, --tries_left)
+        else:
+            log.error('Can\'t load url: %s' % url)
+            return ''
 
 
 def instrument_link(m_code, instrument, date_from, date_to):
@@ -183,9 +197,10 @@ if __name__ == '__main__':
     argv = sys.argv[1:]
     market_from = 0
     instr_from = 0
-    usage = 'test.py -m <market_from> -i <instr_from>'
+    date_from = date.today()
+    usage = 'test.py -m <market_from> -i <instr_from> -d <from_date, YYYY-mm-dd>'
     try:
-        opts, args = getopt.getopt(argv,"hm:i:",["market=","instr="])
+        opts, args = getopt.getopt(argv,"hm:i:d:",["market=","instr=","from-date"])
     except getopt.GetoptError:
         print(usage)
         sys.exit(2)
@@ -198,10 +213,13 @@ if __name__ == '__main__':
                 market_from = int(arg)
             elif opt in ("-i", "--instr"):
                 instr_from = int(arg)
+            elif opt in ("-d", "--from-date"):
+                date_from = datetime.strptime(arg, '%Y-%m-%d').date()
     except ValueError as e:
         print(e)
         print(usage)
         sys.exit(1)
     log.debug('Load markets from index: %d' % market_from)
     log.debug('Load instruments from index: %d' % instr_from)
-    get_topics(market_from, instr_from)
+    log.debug('Load data from: %s' % date_from.strftime('%Y-%m-%d'))
+    get_topics(market_from, instr_from, date_from)
