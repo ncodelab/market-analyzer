@@ -82,8 +82,8 @@ def get_topics(m_start, i_start):
                     if is_valid_data(data):
                         fails = 0
                         day_formatted = day.strftime('%Y-%m-%d')
-                        log.info('Saving data for %s' % day_formatted)
-                        folder = 'data/%s/%s' % (market, instrument)
+                        log.info('Saving data for %s by %s, i: %d, m: %d' % (ticker, day_formatted, i, m))
+                        folder = 'data/%s/%s' % (market, ticker)
                         if not os.path.exists(folder):
                             os.makedirs(folder)
                         filename = '%s/%s.csv' % (folder, day_formatted)
