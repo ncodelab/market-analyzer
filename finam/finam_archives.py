@@ -206,7 +206,7 @@ if __name__ == '__main__':
     argv = sys.argv[1:]
     market_from = 0
     instr_from = 0
-    date_from = date.today()
+    date_start = date.today()
     usage = 'test.py -m <market_from> -i <instr_from> -d <from_date, YYYY-mm-dd>'
     try:
         opts, args = getopt.getopt(argv, 'hm:i:d:', ['market=', 'instr=', 'from-date'])
@@ -223,12 +223,12 @@ if __name__ == '__main__':
             elif opt in ('-i', '--instr'):
                 instr_from = int(arg)
             elif opt in ('-d', '--from-date'):
-                date_from = datetime.strptime(arg, '%Y-%m-%d').date()
+                date_start = datetime.strptime(arg, '%Y-%m-%d').date()
     except ValueError as e:
         print(e)
         print(usage)
         sys.exit(1)
     log.debug('Load markets from index: %d' % market_from)
     log.debug('Load instruments from index: %d' % instr_from)
-    log.debug('Load data from: %s' % date_from.strftime('%Y-%m-%d'))
-    get_topics(market_from, instr_from, date_from)
+    log.debug('Load data from: %s' % date_start.strftime('%Y-%m-%d'))
+    get_topics(market_from, instr_from, date_start)
