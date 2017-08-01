@@ -95,6 +95,7 @@ def get_topics(m_start, i_start, d_start):
                         break
 
                 d_start = date.today()
+                driver.refresh()
 
             i_start = 0
 
