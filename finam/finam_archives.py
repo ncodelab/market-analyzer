@@ -31,7 +31,7 @@ __DOWNLOAD_LINK = 'http://export.finam.ru/%s_%s_%s.csv?' \
                   '&dt=%s&mt=%s&yt=%s&to=%s' \
                   '&p=1&f=%s_%s_%s&e=.csv&cn=%s' \
                   '&dtf=1&tmf=1&MSOR=1&mstime=on&mstimever=1&sep=1&sep2=1&datf=6&at=1'
-__MAX_SEQ_FAILS = 30
+__MAX_SEQ_FAILS = 60
 __NUM_DAYS = 20 * 365
 
 __TIMEOUT = 3
@@ -86,7 +86,7 @@ def get_topics(m_start, i_start):
                         folder = 'data/%s/%s' % (market, instrument)
                         if not os.path.exists(folder):
                             os.makedirs(folder)
-                        filename = '%s/%s-%s.csv' % (folder, instrument, day_formatted)
+                        filename = '%s/%s.csv' % (folder, day_formatted)
                         with open(filename, 'w') as f:
                             f.write(data)
                     else:
