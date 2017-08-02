@@ -8,6 +8,7 @@ import time
 from datetime import date, timedelta, datetime
 from logging.config import fileConfig
 from urllib import request
+from urllib.error import URLError
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -112,7 +113,7 @@ def load_url(url, tries_left=__MAX_TRY_FAILS):
         response = request.urlopen(url)
         data = response.read().decode('utf-8')
         success = True
-    except (TimeoutError, ConnectionRefusedError):
+    except (TimeoutError, ConnectionRefusedError, URLError):
         pass
     if success:
         return data
